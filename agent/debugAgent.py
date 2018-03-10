@@ -11,22 +11,22 @@ CHAR_SUIT_TO_INT = {
 }
 # " {'23456789TJQKA'} + {'shdc''} (note: lower case) "
 CHAR_NUM_TO_INT = {
-        '2': 2,
-        '3': 3,
-        '4': 4,
-        '5': 5,
-        '6': 6,
-        '7': 7,
-        '8': 8,
-        '9': 9,
-        'T': 10,
-        'J': 11,
-        'Q': 12,
-        'K': 13,
-        'A': 1,
+        '2': 1,
+        '3': 2,
+        '4': 3,
+        '5': 4,
+        '6': 5,
+        '7': 6,
+        '8': 7,
+        '9': 8,
+        'T': 9,
+        'J': 10,
+        'Q': 11,
+        'K': 12,
+        'A': 0,
 }
 
-class smarterModel():
+class debugModel():
     def __init__(self):
         self._nothing = "test"
         self.reload_left = 2
@@ -72,7 +72,14 @@ class smarterModel():
 
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
-        print("Test State : ", self.__turn_observation_to_state(state, playerid))
+        print("debug >>>")
+        for p in state.player_states:
+            print(p)
+        print(state.community_state)
+        print(state.community_card)
+        print(playerid)
+        print("<<<  ")
+        # print("Test State : ", self.__turn_observation_to_state(state, playerid))
         if state.community_state.to_call > 0:
             if random.random() > 0.7 :
                 return ACTION(action_table.FOLD, 0)
