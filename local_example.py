@@ -7,11 +7,16 @@ def lets_play(env, n_seats, model_list):
         cur_state = env.reset()
         env.render(mode='machine')
         cycle_terminal = False
+        try:
+            print("reseting all reset state")
+            for m in model_list:
+                m.reset_state()
+        except:
+            pass
+        
         # (cur_state)
         if env.episode_end:
             break
-
-
 
         while not cycle_terminal:
             # play safe actions, check when no one else has raised, call when raised.
@@ -22,6 +27,7 @@ def lets_play(env, n_seats, model_list):
             # print(cur_state.community_state)
 
             actions = holdem.model_list_action(cur_state, n_seats=n_seats, model_list=model_list)
+            current_model = model_list[cur_state.community_state.current_player]
             cur_state, rews, cycle_terminal, info = env.step(actions)
 
             # print("action(t), (CALL=1, RAISE=2, FOLD=3 , CHECK=0, [action, amount])")
@@ -37,7 +43,12 @@ def lets_play(env, n_seats, model_list):
         # total_stack = sum([p.stack for p in env._seats])
         # if total_stack != 10000:
         #     return
-
+    try:
+        for p in env.winning_players:
+            p.estimateReward(p.stack)
+    except:
+        pass
+        
     print("Episode End!!!")
 
 env = gym.make('TexasHoldem-v2') # holdem.TexasHoldemEnv(2)
@@ -70,7 +81,7 @@ env.add_player(7, stack=1000) # add another player to seat 3 with 1000 "chips"
 model_list.append(agent.allFoldModel())
 
 env.add_player(8, stack=1000) # add another player to seat 3 with 1000 "chips"
-model_list.append(agent.allRaiseModel())
+model_list.append(agent.sarsaModel())
 
 env.add_player(9, stack=1000) # add another player to seat 3 with 1000 "chips"
 model_list.append(agent.allFoldModel())

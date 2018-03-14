@@ -112,6 +112,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                                              ]),
                                          ] * n_seats)
         self.episode_end = False
+        self.winning_players = []
 
     def add_player(self, seat_id, stack=1000):
         """Add a player to the environment seat with the given stack (chipcount)"""
@@ -413,18 +414,18 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 # find players involved in given side_pot, compute the winner(s)
                 pot_contributors = [p for p in players if p.lastsidepot >= pot_idx]
                 winning_rank = min([p.handrank for p in pot_contributors])
-                winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
+                self.winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
 
-                for player in winning_players:
-                    split_amount = int(self._side_pots[pot_idx]/len(winning_players))
+                for player in self.winning_players:
+                    split_amount = int(self._side_pots[pot_idx]/len(self.winning_players))
                     if self._debug:
-                        print('[DEBUG] Player', player.player_id, 'wins side pot (', int(self._side_pots[pot_idx]/len(winning_players)), ')')
+                        print('[DEBUG] Player', player.player_id, 'wins side pot (', int(self._side_pots[pot_idx]/len(self.winning_players)), ')')
                     player.refund(split_amount)
                     self._side_pots[pot_idx] -= split_amount
 
                 # any remaining chips after splitting go to the winner in the earliest position
                 if self._side_pots[pot_idx]:
-                    earliest = self._first_to_act([player for player in winning_players])
+                    earliest = self._first_to_act([player for player in self.winning_players])
                     earliest.refund(self._side_pots[pot_idx])
 
     def _reset_game(self):
