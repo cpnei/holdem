@@ -103,6 +103,7 @@ class ClientPlayer():
             player_states.append(player_features)
 
         community_states = COMMUNITY_STATE(
+            int(self._round),
             int(self._button),
             int(self._smallblind),
             int(self._bigblind),

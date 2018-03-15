@@ -487,6 +487,7 @@ class TexasHoldemEnv(Env, utils.EzPickle):
 
 
         community_states = COMMUNITY_STATE(
+            int(self._round),
             int(self._button),
             int(self._smallblind),
             int(self._bigblind),
