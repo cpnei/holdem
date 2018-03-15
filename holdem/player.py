@@ -107,7 +107,8 @@ class Player(object):
         action_idx = int(action_idx)
 
         if tocall == 0:
-            assert action_idx in [Player.CHECK, Player.RAISE]
+            if action_idx not in [Player.CHECK, Player.RAISE]:
+                raise error.Error('invalid action ({}) must be check (0), raise (2)'.format(action_idx))
         else:
             if action_idx not in [Player.RAISE, Player.CALL, Player.FOLD]:
                 raise error.Error('invalid action ({}) must be raise (2), call (1), or fold (3)'.format(action_idx))
