@@ -66,7 +66,7 @@ class sarsaModel():
         return float(sum(playerWins))
     
     def readState(self, state, playerid):
-        self.call_risk = float(state.community_state.to_call)/state.community_state.totalpot
+        self.call_risk = float(state.community_state.to_call+state.player_states[playerid].betting)/state.community_state.totalpot
         pocket = card_list_to_str(state.player_states[playerid].hand)
         board = card_list_to_str(state.community_card)
         self.stack = state.player_states[playerid].stack
@@ -109,6 +109,7 @@ class sarsaModel():
             if q[a-1] > max_q:
                 max_a = a
                 max_q = q[a-1]
+        assert len(available_actions) > 0
         # Q-learning (off policy TD control)
         if self.lastaction.action != action_table.NA:
             self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(R+DISCOUNT*max_q-self.Q[I[0], I[1], I[2], I[3], A])
