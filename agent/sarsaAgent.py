@@ -27,13 +27,13 @@ class sarsaModel():
         self.reload_left = 2
         self.model = {"seed":831}
         self.reset_state()
-        self.Q = np.zeros(4*10*9*10*3).reshape(4,10,9,10,3)
+        self.Q = np.zeros(4*10*10*10*3).reshape(4,10,10,10,3)
         
     def reset_state(self):
         self.hand_odds = 0.0
         self.lastboard = ""
         self.round = 0
-        self.n_players = 0
+        self.n_opponent = 0
         self.call_risk = 0.0
         self._roundRaiseCount = 0
         self.stack = 0
@@ -53,7 +53,7 @@ class sarsaModel():
         return
         
     def state2index(self):
-        return self.round, int(self.hand_odds*10), self.n_players, int(self.call_risk*10)
+        return self.round, int(self.hand_odds*10), self.n_opponent, int(self.call_risk*10)
         
     def getActionValues(self):
         i = self.state2index()
@@ -72,20 +72,25 @@ class sarsaModel():
         self.stack = state.player_states[playerid].stack
         
         #print("debug:", board, ",", self.lastboard)
-        if board != self.lastboard:
+        if state.community_state.round != self.round:
             self.hand_odds = self.calcHandOdds(pocket, board)
             self.lastboard = board
-            self.round += 1
+            self.round = state.community_state.round
             self._roundRaiseCount = 0
         
-        self.n_players = 0
+        self.n_opponent = 0
         for p in state.player_states:
             if p.playing_hand:
-                self.n_players += 1
+                self.n_opponent += 1
+        if state.player_states[playerid].playing_hand:
+            # self is not opponent
+            self.n_opponent -= 1
                 
         available_actions = [action_table.CALL, action_table.RAISE, action_table.FOLD]
         if state.player_states[playerid].stack == 0 or self._roundRaiseCount == 4:
             available_actions.remove(action_table.RAISE)
+        if state.community_state.to_call <= 0:
+            available_actions.remove(action_table.FOLD)
         return available_actions
         
     def takeAction(self, state, playerid):
