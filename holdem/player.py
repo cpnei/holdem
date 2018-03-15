@@ -35,6 +35,7 @@ class Player(object):
     FOLD = 3
 
     def __init__(self, player_id, stack=1000, emptyplayer=False, playername="", reloadCount=0, roundRaiseLimit=4):
+        assert player_id >= 0
         self.player_id = player_id
         self.playername = playername
 
@@ -51,7 +52,6 @@ class Player(object):
         self.emptyplayer = emptyplayer
         self.isallin = False
         self.playing_hand = False
-        self.playedthisround = False
         self.sitting_out = True
         self._roundRaiseLimit = roundRaiseLimit
         self._roundRaiseCount = 0
@@ -67,15 +67,13 @@ class Player(object):
 
     def reset_hand(self):
         self._hand = []
-        self.playedthisround = False
         self.isallin = False
         self.currentbet = 0
         self.lastsidepot = 0
         self.playing_hand = (self.stack != 0)
 
     def bet(self, bet_size):
-        self.playedthisround = True
-        if not bet_size:
+        if bet_size <= self.currentbet:
             return
         self.stack -= (bet_size - self.currentbet)
         self.currentbet = bet_size
@@ -102,7 +100,7 @@ class Player(object):
         tocall = min(table_state.get('tocall', 0), self.stack)
         minraise = table_state.get('minraise', 0)
 
-        [action_idx, raise_amount] = action
+        (action_idx, raise_amount) = action
         raise_amount = int(raise_amount)
         action_idx = int(action_idx)
 
@@ -116,6 +114,7 @@ class Player(object):
         if action_idx == Player.RAISE:
             if self._roundRaiseCount >= self._roundRaiseLimit:
                 move_tuple = ('call', tocall)
+                print("warning: raise limit reached, change action to call.")
             else:
                 if raise_amount < minraise:
                     raise_amount = minraise
@@ -129,5 +128,5 @@ class Player(object):
             move_tuple = ('call', tocall)
         elif action_idx == Player.FOLD:
             move_tuple = ('fold', -1)
-
+        print("player_move:", move_tuple)
         return move_tuple

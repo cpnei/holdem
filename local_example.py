@@ -28,7 +28,6 @@ def lets_play(env, n_seats, model_list):
             # print(cur_state.community_state)
 
             actions = holdem.model_list_action(cur_state, n_seats=n_seats, model_list=model_list)
-            current_model = model_list[cur_state.community_state.current_player]
             cur_state, rews, cycle_terminal, info = env.step(actions)
 
             # print("action(t), (CALL=1, RAISE=2, FOLD=3 , CHECK=0, [action, amount])")
@@ -82,7 +81,7 @@ env.add_player(7, stack=1000) # add another player to seat 3 with 1000 "chips"
 model_list.append(agent.allFoldModel())
 
 env.add_player(8, stack=1000) # add another player to seat 3 with 1000 "chips"
-model_list.append(agent.sarsaModel())
+model_list.append(agent.allRaiseModel())
 
 env.add_player(9, stack=1000) # add another player to seat 3 with 1000 "chips"
 model_list.append(agent.allFoldModel())

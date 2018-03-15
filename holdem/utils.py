@@ -22,14 +22,13 @@
 from treys import Card
 from collections import namedtuple
 
-PLAYER_STATE = namedtuple('player_state', ['emptyplayer', 'seat', 'stack', 'playing_hand', 'handrank', 'playedthisround', 'betting', 'isallin', 'lastsidepot', 'reloadCount', 'hand'])
+PLAYER_STATE = namedtuple('player_state', ['emptyplayer', 'seat', 'stack', 'playing_hand', 'handrank', 'betting', 'isallin', 'lastsidepot', 'reloadCount', 'hand'])
 '''
 emptyplayer, (boolean), True seat is empty, False is not
 seat, (number or string), when play inside gym, this is a seat id, when connect to TM server, this would be player's name
 stack, (number), players current stack (TM's chips)
 playing_hand, (boolean), player is playing current hand (playing current cycle) (1=True, 0=False(not playing)
 handrank, (number), treys.Evaluator.evaluate(hand, community)
-playedthisround, (boolean), whether player is plaed this round (1 cycle has 4 rounds)
 betting, (number), how much amount players have betting in this cycle
 isallin, (boolean), 0 not all in, 1 all in
 lastsidepot, (numer), resolve when someone all in  <NOT USING NOW>
@@ -45,7 +44,7 @@ bigblind, (number), the current big blind amount
 totalpot, (number), the current total amount in the community pot 
 lastraise, (number), the last posted raise amount
 call_price, (number), minimum required raise amount, (acuumulate all round)
-to_call, (number), the amount required to call, (current round)
+to_call, (number), the amount required to call
 current_player, (id), the id of current player
 '''
 STATE = namedtuple('state', ['player_states', 'community_state', 'community_card'])
@@ -68,7 +67,7 @@ def format_action(player, action):
         color = True
     except ImportError:
         pass
-    [aid, raise_amt] = action
+    (aid, raise_amt) = action
     if aid == action_table.CHECK:
         text = '_ check'
         if color:
@@ -128,16 +127,16 @@ def hand_to_str(hand, mode):
 
 def safe_actions(cur_state, n_seats): #  play safe actions, check when no one else has raised, call when raised.
     current_player = cur_state.community_state.current_player
-    to_call = cur_state.community_state.to_call
+    call_bet = cur_state.community_state.to_call-cur_state.player_states[current_player].betting
     actions = [[action_table.CHECK, action_table.NA]] * n_seats
-    if to_call > 0:
+    if call_bet > 0:
         actions[current_player] = [action_table.CALL, action_table.NA]
     return actions
 
 def model_list_action(cur_state, n_seats, model_list):
     current_player = cur_state.community_state.current_player
-    actions = [[action_table.CHECK, action_table.NA]] * n_seats
+    actions = [(action_table.CHECK, action_table.NA)] * n_seats
 
     model_decision = model_list[current_player].takeAction(cur_state, current_player)
-    actions[current_player] = [model_decision.action, model_decision.amount]
+    actions[current_player] = (model_decision.action, model_decision.amount)
     return actions

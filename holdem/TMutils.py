@@ -93,7 +93,6 @@ class ClientPlayer():
                 int(player.stack),
                 int(player.playing_hand),
                 int(player.handrank),
-                int(player.playedthisround),
                 int(player.betting),
                 int(player.isallin),
                 int(player.lastsidepot),
@@ -110,7 +109,7 @@ class ClientPlayer():
             int(self._totalpot),
             int(self._lastraise),
             int(max(self._bigblind, self._lastraise + self._tocall)),
-            int(self._tocall - self._player_dict[my_seat].currentbet),
+            int(self._tocall),
             int(my_seat)
         )
         return STATE(tuple(player_states), community_states, self._pad(self.community, 5, -1))

@@ -66,7 +66,8 @@ class sarsaModel():
         return float(sum(playerWins))
     
     def readState(self, state, playerid):
-        self.call_risk = float(state.community_state.to_call+state.player_states[playerid].betting)/state.community_state.totalpot
+        self.call_risk = float(state.community_state.to_call)/state.community_state.totalpot
+        assert self.call_risk <= 0.5
         pocket = card_list_to_str(state.player_states[playerid].hand)
         board = card_list_to_str(state.community_card)
         self.stack = state.player_states[playerid].stack
@@ -89,7 +90,7 @@ class sarsaModel():
         available_actions = [action_table.CALL, action_table.RAISE, action_table.FOLD]
         if state.player_states[playerid].stack == 0 or self._roundRaiseCount == 4:
             available_actions.remove(action_table.RAISE)
-        if state.community_state.to_call <= 0:
+        if state.community_state.to_call <= state.player_states[playerid].betting:
             available_actions.remove(action_table.FOLD)
         return available_actions
         
@@ -124,7 +125,7 @@ class sarsaModel():
         if action == action_table.RAISE:
             self._roundRaiseCount += 1
             amount = state.community_state.to_call
-        elif action == action_table.CALL and state.community_state.to_call <= 0:
+        elif action == action_table.CALL and state.community_state.to_call <= state.player_states[playerid].betting:
             action = action_table.CHECK
         self.lastaction = ACTION(action, amount)
         return self.lastaction

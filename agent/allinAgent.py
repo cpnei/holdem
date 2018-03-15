@@ -23,7 +23,7 @@ class allinModel():
 
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
-        return ACTION(action_table.RAISE, state.player_states[playerid].stack)
+        return ACTION(action_table.RAISE, state.player_states[playerid].stack-state.player_states[playerid].betting)
 
     def getReload(self, state):
         '''return `True` if reload is needed under state, otherwise `False`'''
