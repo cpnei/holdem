@@ -1,6 +1,7 @@
 import gym
 import holdem
 import agent
+import time
 
 def lets_play(env, n_seats, model_list):
     while True:
@@ -86,5 +87,8 @@ model_list.append(agent.sarsaModel())
 env.add_player(9, stack=1000) # add another player to seat 3 with 1000 "chips"
 model_list.append(agent.allFoldModel())
 
+start_time = time.time()
 # play out a hand
 lets_play(env, env.n_seats, model_list)
+etime = (time.time()-start_time)
+print("Elapsed time:", etime)
