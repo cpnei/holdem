@@ -137,6 +137,7 @@ def model_list_action(cur_state, n_seats, model_list):
     current_player = cur_state.community_state.current_player
     actions = [(action_table.CHECK, action_table.NA)] * n_seats
 
-    model_decision = model_list[current_player].takeAction(cur_state, current_player)
-    actions[current_player] = (model_decision.action, model_decision.amount)
+    if not cur_state.player_states[current_player].isallin:
+        model_decision = model_list[current_player].takeAction(cur_state, current_player)
+        actions[current_player] = (model_decision.action, model_decision.amount)
     return actions
