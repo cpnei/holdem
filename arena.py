@@ -86,14 +86,21 @@ if __name__ == "__main__":
         pass
 
     #logger.setLevel(logging.INFO)
+    log_iterval = 500
+    log_stacks = np.zeros(10)
     stacks = np.zeros(10)
     n_episode = 0
     start_time = time.time()
     
     try:
         while True:
-            stacks += episode(env, env.n_seats, model_list)
+            cur_stacks = episode(env, env.n_seats, model_list)
+            log_stacks += cur_stacks
+            stacks += cur_stacks
             n_episode += 1
+            if n_episode % log_iterval == 0:
+                print(log_stacks/log_iterval)
+                log_stacks.fill(0.0)
             if keyboard.is_pressed('q'):
                 print("Interrupt by key. n_episode = {}".format(n_episode))
                 break
