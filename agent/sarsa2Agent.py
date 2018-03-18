@@ -22,7 +22,7 @@ def card_list_to_str(cards):
         s += (card_to_normal_str(c) + " ")
     return s.strip()
     
-class sarsaModel():
+class sarsa2Model():
     def __init__(self):
         self._nothing = "test"
         self.reload_left = 2
@@ -39,6 +39,7 @@ class sarsaModel():
         self.call_risk = 0.0
         self._roundRaiseCount = 0
         self.stack = 0
+        self.to_call = 0
         self.lastaction = ACTION(action_table.NA, 0)
 
     def batchTrainModel(self):
@@ -74,6 +75,7 @@ class sarsaModel():
         pocket = card_list_to_str(state.player_states[playerid].hand)
         board = card_list_to_str(state.community_card)
         self.stack = state.player_states[playerid].stack
+        self.to_call = float(state.community_state.to_call)
         
         #self.logger.info("debug:", board, ",", self.lastboard)
         if state.community_state.round != self.round:
@@ -102,11 +104,12 @@ class sarsaModel():
         if self.lastaction.action != action_table.NA:
             I = self.state2index()
             R = state.player_states[playerid].stack-self.stack
+            R /= self.to_call
             A = self.lastaction.action-1
-            self.logger.info("sarsaModel: previous stack={}".format(self.stack))
+            self.logger.info("sarsa2Model: previous stack={}, previous to_call={}".format(self.stack, self.to_call))
             
         available_actions = self.readState(state, playerid)
-        self.logger.info("sarsaModel: takeAction: round {}, available_actions={}".format(self.round, available_actions))
+        self.logger.info("sarsa2Model: takeAction: round {}, available_actions={}".format(self.round, available_actions))
         q = self.getActionValues()
         max_a = 0
         max_q = -100000
@@ -115,11 +118,11 @@ class sarsaModel():
                 max_a = a
                 max_q = q[a-1]
         assert len(available_actions) > 0
-        self.logger.info("sarsaModel: max_a={}, max_q={}".format(max_a, max_q))
+        self.logger.info("sarsa2Model: max_a={}, max_q={}".format(max_a, max_q))
         # Q-learning (off policy TD control)
         if self.lastaction.action != action_table.NA:
             E = R+DISCOUNT*max_q-self.Q[I[0], I[1], I[2], I[3], A]
-            self.logger.info("sarsaModel: reward {}, error {}".format(R, E))
+            self.logger.info("sarsa2Model: reward {}, error {}".format(R, E))
             self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
         
         # behaviour is epsilon greedy
@@ -127,7 +130,7 @@ class sarsaModel():
         if np.random.random() < EPSILON:
             # exploration
             action = np.random.choice(available_actions)
-            self.logger.info("sarsaModel: explore action={}".format(action))
+            self.logger.info("sarsa2Model: explore action={}".format(action))
             
         amount = 0.0
         if action == action_table.RAISE:
@@ -141,9 +144,10 @@ class sarsaModel():
     def estimateReward(self, current_stack):
         I = self.state2index()
         R = current_stack-self.stack
+        R /= self.to_call
         A = self.lastaction.action-1
         E = R+0-self.Q[I[0], I[1], I[2], I[3], A]
-        self.logger.info("sarsaModel: reward {}, lastaction {}, error {}".format(R, self.lastaction.action, E))
+        self.logger.info("sarsa2Model: reward {}, lastaction {}, error {}".format(R, self.lastaction.action, E))
         # Action values of terminal state are always zeros
         self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
 

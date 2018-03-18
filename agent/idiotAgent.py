@@ -8,6 +8,10 @@ class idiotModel():
         self._nothing = "test"
         self.reload_left = 2
         self.model = {"seed":831}
+        self.reset_state()
+        
+    def reset_state(self):
+        self._roundRaiseCount = 0
 
     def batchTrainModel(self):
         return
@@ -23,18 +27,20 @@ class idiotModel():
 
     def takeAction(self, state, playerid):
         ''' (Predict/ Policy) Select Action under state'''
-        if state.community_state.to_call > 0:
+        (action, amount) = (action_table.CHECK, 0)
+        if state.community_state.to_call > state.player_states[playerid].betting:
             if random.random() > 0.7 :
-                return ACTION(action_table.FOLD, 0)
+                action = action_table.FOLD
             else:
-                return ACTION(action_table.CALL, state.community_state.to_call)
-        else:
+                (action, amount) = (action_table.CALL, state.community_state.to_call)
+        elif state.player_states[playerid].stack > 0 and self._roundRaiseCount < 4:
             if random.random() > 0.7:
-                return ACTION(action_table.RAISE, 50)
+                (action, amount) = (action_table.RAISE, state.community_state.to_call)
             elif random.random() > 0.9:
-                return ACTION(action_table.RAISE, state.player_states[playerid].stack)
-            else:
-                return ACTION(action_table.CHECK, 0)
+                (action, amount) = (action_table.RAISE, state.player_states[playerid].stack)
+        if action == action_table.RAISE:
+            self._roundRaiseCount += 1
+        return ACTION(action, amount)
 
     def getReload(self, state):
         '''return `True` if reload is needed under state, otherwise `False`'''

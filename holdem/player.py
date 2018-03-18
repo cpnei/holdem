@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from random import randint
-
+import logging
 from gym import error
 
 from treys import Card
@@ -55,6 +55,7 @@ class Player(object):
         self.sitting_out = True
         self._roundRaiseLimit = roundRaiseLimit
         self._roundRaiseCount = 0
+        self.logger = logging.getLogger('TexasHoldemEnv')
 
     def get_name(self):
         return self.playername
@@ -114,7 +115,7 @@ class Player(object):
         if action_idx == Player.RAISE:
             if self._roundRaiseCount >= self._roundRaiseLimit:
                 move_tuple = ('call', tocall)
-                print("warning: raise limit reached, change action to call.")
+                self.logger.info("warning: raise limit reached, change action to call.")
             else:
                 if raise_amount < minraise:
                     raise_amount = minraise
@@ -128,5 +129,5 @@ class Player(object):
             move_tuple = ('call', tocall)
         elif action_idx == Player.FOLD:
             move_tuple = ('fold', -1)
-        print("player_move:", move_tuple)
+        self.logger.info("player_move: {}".format(move_tuple))
         return move_tuple

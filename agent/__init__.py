@@ -6,3 +6,4 @@ from .allcallAgent import allCallModel
 from .allinAgent import allinModel
 from .allraiseAgent import allRaiseModel
 from .sarsaAgent import sarsaModel
+from .sarsa2Agent import sarsa2Model
