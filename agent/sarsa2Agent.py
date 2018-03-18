@@ -28,7 +28,9 @@ class sarsa2Model():
         self.reload_left = 2
         self.model = {"seed":831}
         self.reset_state()
-        self.Q = np.zeros(4*11*10*10*3).reshape(4,11,10,10,3)
+        self.Q = np.zeros(4*11*12*10*10*3).reshape(4,11,12,10,10,3)
+        self.Q_hit = np.copy(self.Q)
+        self.Q_err = np.copy(self.Q)
         self.logger = logging.getLogger('TexasHoldemEnv')
         
     def reset_state(self):
@@ -39,7 +41,7 @@ class sarsa2Model():
         self.call_risk = 0.0
         self._roundRaiseCount = 0
         self.stack = 0
-        self.to_call = 0
+        self.call_level = 0
         self.lastaction = ACTION(action_table.NA, 0)
 
     def batchTrainModel(self):
@@ -50,6 +52,8 @@ class sarsa2Model():
 
     def saveModel(self, path):
         np.save(path, self.Q)
+        np.save(path+".hit", self.Q_hit)
+        np.save(path+".err", self.Q_err)
         return
 
     def loadModel(self, path):
@@ -57,11 +61,11 @@ class sarsa2Model():
         return
         
     def state2index(self):
-        return self.round, int(self.hand_odds*10), self.n_opponent, int(self.call_risk*10)
+        return self.round, int(self.hand_odds*10), self.call_level, self.n_opponent, int(self.call_risk*10)
         
     def getActionValues(self):
         i = self.state2index()
-        return self.Q[i[0], i[1], i[2], i[3], :]
+        return self.Q[i[0], i[1], i[2], i[3], i[4], :]
         
     def calcHandOdds(self, pocket, board):
         playerWins = Array[Double]([1.0]*9)
@@ -75,7 +79,11 @@ class sarsa2Model():
         pocket = card_list_to_str(state.player_states[playerid].hand)
         board = card_list_to_str(state.community_card)
         self.stack = state.player_states[playerid].stack
-        self.to_call = float(state.community_state.to_call)
+        self.call_level = float(state.community_state.to_call)/20
+        if self.call_level < 1:
+            self.call_level = 0
+        else:
+            self.call_level = int(np.log2(self.call_level))
         
         #self.logger.info("debug:", board, ",", self.lastboard)
         if state.community_state.round != self.round:
@@ -104,9 +112,9 @@ class sarsa2Model():
         if self.lastaction.action != action_table.NA:
             I = self.state2index()
             R = state.player_states[playerid].stack-self.stack
-            R /= self.to_call
             A = self.lastaction.action-1
-            self.logger.info("sarsa2Model: previous stack={}, previous to_call={}".format(self.stack, self.to_call))
+            I += (A,)
+            self.logger.info("sarsa2Model: previous stack={}, previous call_level={}".format(self.stack, self.call_level))
             
         available_actions = self.readState(state, playerid)
         self.logger.info("sarsa2Model: takeAction: round {}, available_actions={}".format(self.round, available_actions))
@@ -121,9 +129,11 @@ class sarsa2Model():
         self.logger.info("sarsa2Model: max_a={}, max_q={}".format(max_a, max_q))
         # Q-learning (off policy TD control)
         if self.lastaction.action != action_table.NA:
-            E = R+DISCOUNT*max_q-self.Q[I[0], I[1], I[2], I[3], A]
+            E = R+DISCOUNT*max_q-self.Q[I]
             self.logger.info("sarsa2Model: reward {}, error {}".format(R, E))
-            self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
+            self.Q[I] = self.Q[I] + STEP_SIZE*E
+            self.Q_hit[I] += 1
+            self.Q_err[I] = 0.9*self.Q_err[I]+0.1*np.absolute(E)
         
         # behaviour is epsilon greedy
         action = max_a
@@ -144,12 +154,12 @@ class sarsa2Model():
     def estimateReward(self, current_stack):
         I = self.state2index()
         R = current_stack-self.stack
-        R /= self.to_call
         A = self.lastaction.action-1
-        E = R+0-self.Q[I[0], I[1], I[2], I[3], A]
+        I += (A,)
+        E = R+0-self.Q[I]
         self.logger.info("sarsa2Model: reward {}, lastaction {}, error {}".format(R, self.lastaction.action, E))
         # Action values of terminal state are always zeros
-        self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
+        self.Q[I] = self.Q[I] + STEP_SIZE*(E)
 
     def getReload(self, state):
         '''return `True` if reload is needed under state, otherwise `False`'''

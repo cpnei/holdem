@@ -29,6 +29,8 @@ class sarsaModel():
         self.model = {"seed":831}
         self.reset_state()
         self.Q = np.zeros(4*11*10*10*3).reshape(4,11,10,10,3)
+        self.Q_hit = np.copy(self.Q)
+        self.Q_err = np.copy(self.Q)
         self.logger = logging.getLogger('TexasHoldemEnv')
         
     def reset_state(self):
@@ -49,6 +51,8 @@ class sarsaModel():
 
     def saveModel(self, path):
         np.save(path, self.Q)
+        np.save(path+".hit", self.Q_hit)
+        np.save(path+".err", self.Q_err)
         return
 
     def loadModel(self, path):
@@ -103,6 +107,7 @@ class sarsaModel():
             I = self.state2index()
             R = state.player_states[playerid].stack-self.stack
             A = self.lastaction.action-1
+            I += (A,)
             self.logger.info("sarsaModel: previous stack={}".format(self.stack))
             
         available_actions = self.readState(state, playerid)
@@ -118,9 +123,11 @@ class sarsaModel():
         self.logger.info("sarsaModel: max_a={}, max_q={}".format(max_a, max_q))
         # Q-learning (off policy TD control)
         if self.lastaction.action != action_table.NA:
-            E = R+DISCOUNT*max_q-self.Q[I[0], I[1], I[2], I[3], A]
+            E = R+DISCOUNT*max_q-self.Q[I]
             self.logger.info("sarsaModel: reward {}, error {}".format(R, E))
-            self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
+            self.Q[I] = self.Q[I] + STEP_SIZE*E
+            self.Q_hit[I] += 1
+            self.Q_err[I] = 0.9*self.Q_err[I]+0.1*np.absolute(E)
         
         # behaviour is epsilon greedy
         action = max_a
@@ -142,10 +149,11 @@ class sarsaModel():
         I = self.state2index()
         R = current_stack-self.stack
         A = self.lastaction.action-1
-        E = R+0-self.Q[I[0], I[1], I[2], I[3], A]
+        I += (A,)
+        E = R+0-self.Q[I]
         self.logger.info("sarsaModel: reward {}, lastaction {}, error {}".format(R, self.lastaction.action, E))
         # Action values of terminal state are always zeros
-        self.Q[I[0], I[1], I[2], I[3], A] = self.Q[I[0], I[1], I[2], I[3], A] + STEP_SIZE*(E)
+        self.Q[I] = self.Q[I] + STEP_SIZE*(E)
 
     def getReload(self, state):
         '''return `True` if reload is needed under state, otherwise `False`'''
