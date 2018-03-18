@@ -79,10 +79,13 @@ if __name__ == "__main__":
     model_list.append(agent.allRaiseModel()) #8
     model_list.append(agent.sarsaModel()) #9
     
-    model_list[5].loadModel("sarsa5.npy")
-    model_list[9].loadModel("sarsa9.npy")
+    try:
+        model_list[5].loadModel("sarsa5.npy")
+        model_list[9].loadModel("sarsa9.npy")
+    except:
+        pass
 
-    logger.setLevel(logging.INFO)
+    #logger.setLevel(logging.INFO)
     stacks = np.zeros(10)
     n_episode = 0
     start_time = time.time()
