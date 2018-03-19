@@ -101,6 +101,8 @@ if __name__ == "__main__":
             if n_episode % log_iterval == 0:
                 print(log_stacks/log_iterval)
                 log_stacks.fill(0.0)
+                model_list[5].saveModel("sarsa5.npy")
+                model_list[9].saveModel("sarsa9.npy")
             if keyboard.is_pressed('q'):
                 print("Interrupt by key. n_episode = {}".format(n_episode))
                 break
