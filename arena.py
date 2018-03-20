@@ -69,13 +69,13 @@ if __name__ == "__main__":
     env = new_env()
     model_list = list()
     model_list.append(agent.idiotModel()) #0
-    model_list.append(agent.allFoldModel()) #1
-    model_list.append(agent.allFoldModel()) #2
-    model_list.append(agent.allFoldModel()) #3
-    model_list.append(agent.allFoldModel()) #4
+    model_list.append(agent.idiotModel()) #1
+    model_list.append(agent.idiotModel()) #2
+    model_list.append(agent.idiotModel()) #3
+    model_list.append(agent.idiotModel()) #4
     model_list.append(agent.sarsa2Model()) #5
     model_list.append(agent.allCallModel()) #6
-    model_list.append(agent.allFoldModel()) #7
+    model_list.append(agent.idiotModel()) #7
     model_list.append(agent.allRaiseModel()) #8
     model_list.append(agent.sarsaModel()) #9
     

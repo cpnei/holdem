@@ -28,19 +28,22 @@ class sarsaModel():
         self.reload_left = 2
         self.model = {"seed":831}
         self.reset_state()
-        self.Q = np.zeros(4*11*10*10*3).reshape(4,11,10,10,3)
+        self.Q = np.zeros(4*11*11*12*10*10*3).reshape(4,11,11,12,10,10,3)
         self.Q_hit = np.copy(self.Q)
         self.Q_err = np.copy(self.Q)
         self.logger = logging.getLogger('TexasHoldemEnv')
         
     def reset_state(self):
         self.hand_odds = 0.0
+        self.ppot = 0.0 
+        self.npot = 0.0
         self.lastboard = ""
         self.round = 0
         self.n_opponent = 0
         self.call_risk = 0.0
         self._roundRaiseCount = 0
         self.stack = 0
+        self.call_level = 0
         self.lastaction = ACTION(action_table.NA, 0)
 
     def batchTrainModel(self):
@@ -60,11 +63,11 @@ class sarsaModel():
         return
         
     def state2index(self):
-        return self.round, int(self.hand_odds*10), self.n_opponent, int(self.call_risk*10)
+        return self.round, int(self.hand_odds*10), int(self.ppot*10), self.call_level, self.n_opponent, int(self.call_risk*10)
         
     def getActionValues(self):
         i = self.state2index()
-        return self.Q[i[0], i[1], i[2], i[3], :]
+        return self.Q[i[0], i[1], i[2], i[3], i[4], i[5], :]
         
     def calcHandOdds(self, pocket, board):
         playerWins = Array[Double]([1.0]*9)
@@ -78,12 +81,21 @@ class sarsaModel():
         pocket = card_list_to_str(state.player_states[playerid].hand)
         board = card_list_to_str(state.community_card)
         self.stack = state.player_states[playerid].stack
+        self.call_level = float(state.community_state.to_call)/20
+        if self.call_level < 1:
+            self.call_level = 0
+        else:
+            self.call_level = int(np.log2(self.call_level))
         
         #self.logger.info("debug:", board, ",", self.lastboard)
         if state.community_state.round != self.round:
-            self.hand_odds = self.calcHandOdds(pocket, board)
-            self.lastboard = board
             self.round = state.community_state.round
+            self.hand_odds = self.calcHandOdds(pocket, board)
+            if self.round < 3 and self.round > 0:
+                (r, self.ppot, self.npot) = Hand.HandPotential(pocket, board, Double(0), Double(0))
+            else:
+                (self.ppot, self.npot) = (0.0, 0.0)
+            self.lastboard = board
             self._roundRaiseCount = 0
         
         self.n_opponent = 0
@@ -108,7 +120,7 @@ class sarsaModel():
             R = state.player_states[playerid].stack-self.stack
             A = self.lastaction.action-1
             I += (A,)
-            self.logger.info("sarsaModel: previous stack={}".format(self.stack))
+            self.logger.info("sarsaModel: previous stack={}, previous call_level={}".format(self.stack, self.call_level))
             
         available_actions = self.readState(state, playerid)
         self.logger.info("sarsaModel: takeAction: round {}, available_actions={}".format(self.round, available_actions))
