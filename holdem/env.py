@@ -443,15 +443,19 @@ class TexasHoldemEnv(Env, utils.EzPickle):
             for pot_idx,_ in enumerate(temp_pots):
                 # find players involved in given side_pot, compute the winner(s)
                 pot_contributors = [p for p in players if p.lastsidepot >= pot_idx]
-                winning_rank = min([p.handrank for p in pot_contributors])
-                self.winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
+                if len(pot_contributors) == 0:
+                    print("_resolve_round() error: pot_idx={}, temp_pots={}, lastsidepot={}, _side_pots={}, _current_sidepot={}".format(pot_idx, temp_pots, [p.lastsidepot for p in players], self._side_pots, self._current_sidepot))
+                    print("stacks={}".format([p.stack for p in players]))
+                else:
+                    winning_rank = min([p.handrank for p in pot_contributors])
+                    self.winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
 
-                for player in self.winning_players:
-                    split_amount = int(self._side_pots[pot_idx]/len(self.winning_players))
-                    if self._debug:
-                        print('[DEBUG] Player', player.player_id, 'wins side pot (', int(self._side_pots[pot_idx]/len(self.winning_players)), ')')
-                    player.refund(split_amount)
-                    self._side_pots[pot_idx] -= split_amount
+                    for player in self.winning_players:
+                        split_amount = int(self._side_pots[pot_idx]/len(self.winning_players))
+                        if self._debug:
+                            print('[DEBUG] Player', player.player_id, 'wins side pot (', int(self._side_pots[pot_idx]/len(self.winning_players)), ')')
+                        player.refund(split_amount)
+                        self._side_pots[pot_idx] -= split_amount
 
                 # any remaining chips after splitting go to the winner in the earliest position
                 if self._side_pots[pot_idx]:
@@ -514,7 +518,6 @@ class TexasHoldemEnv(Env, utils.EzPickle):
                 self._pad(player.hand, 2, -1)
             )
             player_states.append(player_features)
-
 
         community_states = COMMUNITY_STATE(
             int(self._round),

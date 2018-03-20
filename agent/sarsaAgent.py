@@ -63,7 +63,10 @@ class sarsaModel():
         return
         
     def state2index(self):
-        return self.round, int(self.hand_odds*10), int(self.ppot*10), self.call_level, self.n_opponent, int(self.call_risk*10)
+        risk = int(self.call_risk*10)
+        if risk >= 10:
+            risk = 9
+        return self.round, int(self.hand_odds*10), int(self.ppot*10), self.call_level, self.n_opponent, risk
         
     def getActionValues(self):
         i = self.state2index()

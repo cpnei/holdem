@@ -68,10 +68,10 @@ def new_env():
 if __name__ == "__main__":
     env = new_env()
     model_list = list()
-    model_list.append(agent.idiotModel()) #0
-    model_list.append(agent.idiotModel()) #1
-    model_list.append(agent.idiotModel()) #2
-    model_list.append(agent.idiotModel()) #3
+    model_list.append(agent.MCModel(save=False)) #0
+    model_list.append(agent.AllinWinAction()) #1
+    model_list.append(agent.stevenRule()) #2
+    model_list.append(agent.MCModel(save=False)) #3
     model_list.append(agent.idiotModel()) #4
     model_list.append(agent.sarsa2Model()) #5
     model_list.append(agent.allCallModel()) #6
@@ -80,6 +80,9 @@ if __name__ == "__main__":
     model_list.append(agent.sarsaModel()) #9
     
     try:
+        model_list[0].loadModel('pi.pkl')
+        model_list[1].loadModel('john_model')
+        model_list[3].loadModel('pi2.pkl')
         model_list[5].loadModel("sarsa5.npy")
         model_list[9].loadModel("sarsa9.npy")
     except:
@@ -111,7 +114,7 @@ if __name__ == "__main__":
         traceback.print_exc()
     
     etime = (time.time()-start_time)
-    print("Elapsed time: {}, per episode {}".format(etime, float(etime)/n_episode))
+    print("Elapsed time: {}, per episode {}, n_episode = {}".format(etime, float(etime)/n_episode, n_episode))
     print(stacks/n_episode)
 
     model_list[5].saveModel("sarsa5.npy")
